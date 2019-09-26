@@ -219,21 +219,21 @@ def alarmStatus_StatusChange(evt) {
     
     switch(alarmstatus) {
     	case "away":
-        	unsubscribe();
+            unsubscribe();
             alarmAwayButton.on();
             alarmStayButton.off();
             alarmOffButton.off();
 			subscribeAll();
             break;
         case "stay":
-        	unsubscribe();
+            unsubscribe();
             alarmAwayButton.off();
             alarmStayButton.on();
             alarmOffButton.off();
             subscribeAll();
             break;
         case "off":
-        	unsubscribe();
+            unsubscribe();
             alarmAwayButton.off();
             alarmStayButton.off();
             alarmOffButton.on();
@@ -382,7 +382,7 @@ def countDownToArm(mode) {
  * Set the alarm mode to stay or away.
  */
 def setAlarmModeToStayAway() {
-	def stayVal = alarmStayButton.currentState("switch").getValue();
+    def stayVal = alarmStayButton.currentState("switch").getValue();
     def awayVal = alarmAwayButton.currentState("switch").getValue();
     log.debug "setAlarmModeToStayAway - Current Switch Mode Stay:${stayVal}, Away:${awayVal}";
     if (stayVal == "on" || awayVal == "on") {
@@ -395,7 +395,7 @@ def setAlarmModeToStayAway() {
  * Have LanNouncer say something.
  */
 def lanNouncerSpeak(data) {
-	def stayVal = alarmStayButton.currentState("switch").getValue();
+    def stayVal = alarmStayButton.currentState("switch").getValue();
     def awayVal = alarmAwayButton.currentState("switch").getValue();
     log.debug "lanNouncerSpeak - Current Switch Mode Stay:${stayVal}, Away:${awayVal}";
     if (stayVal == "on" || awayVal == "on") {

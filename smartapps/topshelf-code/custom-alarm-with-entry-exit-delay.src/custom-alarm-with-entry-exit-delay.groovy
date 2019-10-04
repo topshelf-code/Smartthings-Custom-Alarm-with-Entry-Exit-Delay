@@ -310,8 +310,10 @@ def doorOpened(evt, source) {
     	return;
     }
     
-    //Play chime =)
-    lanNouncer.speak("@|ALARM=CHIME");
+    if (source != "primaryMotionSensor"){
+        //Play chime =)
+    	lanNouncer.speak("@|ALARM=CHIME");
+    }
 
     def alarm = location.currentState("alarmSystemStatus");
     def alarmstatus = alarm?.value;

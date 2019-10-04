@@ -84,6 +84,8 @@ def updated() {
  * Declare all of your event handlers.
  */
 def initialize() {
+	state.alarmTriggered = false;
+    log.debug "state.alarmTriggered - ${state.alarmTriggered}";
 	subscribeAll();
 }
 
@@ -107,7 +109,7 @@ def subscribeAll() {
     subscribe(frontContactSensor, "contact.open", frontContactSensor_Open);
     subscribe(backContactSensor, "contact.open", backContactSensor_Open);
     subscribe(garageContactSensor, "contact.open", garageContactSensor_Open);
-    subscribe(primaryMotionSensor, "contact.active", primaryMotionSensor_Active);
+    subscribe(primaryMotionSensor, "motion.active", primaryMotionSensor_Active);
 }
 
 //region virtual switch/button events handlers
@@ -152,7 +154,7 @@ def alarmStayButton_On(evt) {
     subscribeAll();
 
     log.debug "alarmStayButton_On: ${evt}";
-    log.debug "alarmStayButton_On - Set mode changed to Away";
+    log.debug "alarmStayButton_On - Set mode changed to Stay";
     sendLocationEvent(name: "alarmSystemStatus", value: "stay");
 }
 
@@ -186,6 +188,7 @@ def alarmOffButton_On(evt) {
     
     //Stop alarm is necessary.
     lanNouncer.speak("@|ALARM=STOP");
+    state.alarmTriggered = false;
 }
 
 /**
@@ -233,11 +236,17 @@ def alarmStatus_StatusChange(evt) {
             subscribeAll();
             break;
         case "off":
+        	//Flush any delayed audio.
+        	unschedule(lanNouncerSpeak);
+            unschedule(soundAlarm);
+            unschedule(setAlarmModeToAway);
+            
             unsubscribe();
             alarmAwayButton.off();
             alarmStayButton.off();
             alarmOffButton.on();
             subscribeAll();
+            state.alarmTriggered = false;
             break;
         default:
             //Do nothing
@@ -296,6 +305,11 @@ def primaryMotionSensor_Active(evt) {
  * @param evt Event handler.
  */
 def doorOpened(evt, source) {
+	log.debug "state.alarmTriggered - ${state.alarmTriggered}";
+	if (state.alarmTriggered == true) {
+    	return;
+    }
+    
     //Play chime =)
     lanNouncer.speak("@|ALARM=CHIME");
 
@@ -346,6 +360,14 @@ def doorOpened(evt, source) {
  * @param evt Relayed event from origin event handler.
  */
 def countDownToDisarm(mode) {
+	log.debug "state.alarmTriggered - ${state.alarmTriggered}";
+	if (state.alarmTriggered == true) {
+    	return;
+    }
+    
+    state.alarmTriggered = true;
+    log.debug "state.alarmTriggered - ${state.alarmTriggered}";
+	
     def delayTime = 0;
     log.debug "countDownToDisarm - Counting down.";
 
@@ -357,7 +379,7 @@ def countDownToDisarm(mode) {
     runIn(40, lanNouncerSpeak, [overwrite: false, data: [message: "You now have T minus 20 seconds to disarm the alarm system."]]);
     runIn(50, lanNouncerSpeak, [overwrite: false, data: [message: "Alarm system intrusion event imminent."]]);
     runIn(60, lanNouncerSpeak, [overwrite: false, data: [message: "An intrusion has been detected.  Executing biological purge sequence."]]);
-    runIn(60, soundAlarm); //Unleash the fury in 60 seconds.
+    runIn(70, soundAlarm); //Unleash the fury in 60 seconds.
 }
 
 /**
@@ -375,19 +397,18 @@ def countDownToArm(mode) {
     runIn(40, lanNouncerSpeak, [overwrite: false, data: [message: "You now have T minus 20 seconds to exit the facility."]]);
     runIn(50, lanNouncerSpeak, [overwrite: false, data: [message: "Alarm system activation event is imminent."]]);
     runIn(60, lanNouncerSpeak, [overwrite: false, data: [message: "Alarm system is now armed."]]);
-	runIn(60, setAlarmModeToStayAway); //Arm this badboy in 60 seconds.
+	runIn(60, setAlarmModeToAway); //Arm this badboy in 60 seconds.
 }
 
 /**
- * Set the alarm mode to stay or away.
+ * Set the alarm mode to away.
  */
-def setAlarmModeToStayAway() {
-    def stayVal = alarmStayButton.currentState("switch").getValue();
+def setAlarmModeToAway() {
     def awayVal = alarmAwayButton.currentState("switch").getValue();
-    log.debug "setAlarmModeToStayAway - Current Switch Mode Stay:${stayVal}, Away:${awayVal}";
-    if (stayVal == "on" || awayVal == "on") {
-        log.debug "setAlarmModeToStayAway - Set mode changed to Stay";
-        sendLocationEvent(name: "alarmSystemStatus", value: "stay");
+    log.debug "setAlarmModeToAway - Current Switch Mode Away:${awayVal}";
+    if (awayVal == "on") {
+        log.debug "setAlarmModeToAway - Set mode changed to Away";
+        sendLocationEvent(name: "alarmSystemStatus", value: "away");
     }
 }
 

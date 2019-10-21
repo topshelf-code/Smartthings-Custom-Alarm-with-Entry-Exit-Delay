@@ -57,6 +57,9 @@ preferences {
 
         input "lanNouncer", "capability.speechSynthesis", required: false, multiple: true, submitOnChange: true,
                 title: "LanNouncer Panel 1.";
+                
+        input "lanNouncerMuteButton", "capability.switch", required: true,
+                title: "Button used to temporarily mute lanNouncer.", submitOnChange: true;
     }
 }
 
@@ -110,6 +113,8 @@ def subscribeAll() {
     subscribe(backContactSensor, "contact.open", backContactSensor_Open);
     subscribe(garageContactSensor, "contact.open", garageContactSensor_Open);
     subscribe(primaryMotionSensor, "motion.active", primaryMotionSensor_Active);
+    
+    subscribe(lanNouncerMuteButton, "switch.on", lanNouncerMuteButton_On);
 }
 
 //region virtual switch/button events handlers
@@ -200,6 +205,15 @@ def alarmOffButton_On(evt) {
  */
 def alarmOffButton_Off(evt) {
 	alarmOffButton.on();
+}
+
+/**
+ * EventHandler for when lanNouncerMuteButton turns on.
+ *
+ * @param evt Event handler.
+ */
+def lanNouncerMuteButton_On(evt) {
+	runIn(60, setlanNouncerMuteButtonOff); //Turn lanNouncerMuteButton off in 60 seconds.
 }
 
 //endregion
@@ -311,8 +325,12 @@ def doorOpened(evt, source) {
     }
     
     if (source != "primaryMotionSensor"){
-        //Play chime =)
-    	lanNouncer.speak("@|ALARM=CHIME");
+        def mute = lanNouncerMuteButton.currentState("switch").getValue();
+
+        if (mute != "off"){
+        	//Play chime =)
+    		lanNouncer.speak("@|ALARM=CHIME");
+        }
     }
 
     def alarm = location.currentState("alarmSystemStatus");
@@ -440,6 +458,13 @@ def soundAlarm() {
         primaryIgnitionContactSensor.close();
         lanNouncer.speak("@|ALARM=SIREN:CONTINUOUS");
     }
+}
+
+/**
+ * Turn off lanNouncerMuteButton.
+ */
+def setlanNouncerMuteButtonOff() {
+	lanNouncerMuteButton.off();
 }
 
 //endregion

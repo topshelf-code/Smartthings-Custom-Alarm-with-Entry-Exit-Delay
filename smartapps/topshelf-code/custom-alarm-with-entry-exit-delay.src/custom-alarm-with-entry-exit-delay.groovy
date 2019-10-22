@@ -327,7 +327,7 @@ def doorOpened(evt, source) {
     if (source != "primaryMotionSensor"){
         def mute = lanNouncerMuteButton.currentState("switch").getValue();
 
-        if (mute != "off"){
+        if (mute != "on"){
         	//Play chime =)
     		lanNouncer.speak("@|ALARM=CHIME");
         }

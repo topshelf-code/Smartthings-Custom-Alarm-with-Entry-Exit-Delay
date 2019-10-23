@@ -60,6 +60,9 @@ preferences {
                 
         input "lanNouncerMuteButton", "capability.switch", required: true,
                 title: "Button used to temporarily mute lanNouncer.", submitOnChange: true;
+                
+        input "lanNouncerChimeButton", "capability.switch", required: true,
+                title: "Button used to play lanNouncer chime.  Typically used for chime testing.", submitOnChange: true;
     }
 }
 
@@ -115,6 +118,7 @@ def subscribeAll() {
     subscribe(primaryMotionSensor, "motion.active", primaryMotionSensor_Active);
     
     subscribe(lanNouncerMuteButton, "switch.on", lanNouncerMuteButton_On);
+    subscribe(lanNouncerChimeButton, "switch.on", lanNouncerChimeButton_On);
 }
 
 //region virtual switch/button events handlers
@@ -214,6 +218,19 @@ def alarmOffButton_Off(evt) {
  */
 def lanNouncerMuteButton_On(evt) {
 	runIn(60, setlanNouncerMuteButtonOff); //Turn lanNouncerMuteButton off in 60 seconds.
+}
+
+/**
+ * EventHandler for when lanNouncerChimeButton turns on.
+ *
+ * @param evt Event handler.
+ */
+def lanNouncerChimeButton_On(evt) {
+	log.debug "lanNouncerChimeButton_On: ${evt}";
+    
+	//Play chime =)
+    lanNouncer.speak("@|ALARM=CHIME");
+    lanNouncerChimeButton.off();
 }
 
 //endregion
